@@ -89,11 +89,12 @@ export const getAttendanceById = async (req: AuthRequest, res: Response) => {
 // PUT /api/v1/admin/attendance/:id
 export const updateAttendanceStatus = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.params.id;
+    const id = req.params.pid;
+    console.log(id, 'user id')
     const { status } = req.body;
 
     const record = await prisma.attendance.update({
-      where: { userId },
+      where: { id },
       data: { status },
     });
 

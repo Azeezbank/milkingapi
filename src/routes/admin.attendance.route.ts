@@ -5,6 +5,6 @@ const router = Router();
 
 router.get("/attendance", getAdminAttendance);
 router.get("/attendance/:id", getAttendanceById);
-router.put("/attendance/:id", updateAttendanceStatus);
+router.put("/attendance/:pid", updateAttendanceStatus);
 
 export default router;
