@@ -15,10 +15,23 @@ const app = express();
 
 app.use(express.json());
 app.use(cookieParser());
+
+const allowedOrigins = [
+  "http://localhost:3000",          // local dev
+  "https://milking-three.vercel.app" // deployed frontend
+];
+
 app.use(cors({
-  origin: 'http://localhost:3000', // frontend URL
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true); // allow non-browser requests like Postman
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true,               // allow cookies
+  credentials: true, // allow cookies
 }));
 
 //Protect page
