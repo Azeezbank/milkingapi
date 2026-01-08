@@ -1,0 +1,36 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Attendance {
+  id        String        @id @db.Uuid
+  date      DateTime
+  status    UserAttendace @default(Absent)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  userId    String        @db.Uuid   @unique
+  User      User          @relation(fields: [userId], references: [id])
+}
+
+model User {
+  id         String       @id @db.Uuid
+  name       String
+  email      String       @unique
+  phone      String       @unique
+  username   String       @unique
+  password   String
+  role       String
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  Attendance Attendance[]
+}
+
+enum UserAttendace {
+  Present
+  Absent
+}
