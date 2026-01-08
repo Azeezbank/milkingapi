@@ -13,7 +13,7 @@ model Attendance {
   status    UserAttendace @default(Absent)
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
-  userId    String        @db.Uuid   @unique
+  userId    String        @db.Uuid
   User      User          @relation(fields: [userId], references: [id])
 }
 
@@ -25,6 +25,7 @@ model User {
   username   String       @unique
   password   String
   role       String
+  superRole  String?
   createdAt  DateTime     @default(now())
   updatedAt  DateTime     @updatedAt
   Attendance Attendance[]

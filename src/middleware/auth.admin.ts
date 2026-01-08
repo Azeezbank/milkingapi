@@ -12,7 +12,7 @@ export const requireAdmin = (
     return res.status(401).json({ message: "Not authenticated" });
   }
 
-  if (req.user.role !== "Team Leader") {
+  if (req.user.role !== "Team Leader" && req.user.superRole !== "Admin") {
     console.log("User is not an admin:", req.user.role);
     return res.status(403).json({
       message: "Access denied. Admin only.",

@@ -93,6 +93,8 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
       },
     });
 
+    console.log('super role updated', updatedUser);
+
     res.status(200).json({ user: updatedUser });
   } catch (err: any) {
     console.error(err);
@@ -121,6 +123,7 @@ export const getCurrentUser = async (req: AuthRequest, res: Response) => {
         phone: true,
         username: true,
         role: true,
+        superRole: true,
       },
     });
 
