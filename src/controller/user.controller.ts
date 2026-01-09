@@ -76,9 +76,6 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
   const { name, email, phone, username, role } = req.body;
 
   try {
-    // if (req.user?.role !== "admin") {
-    //   return res.status(403).json({ message: "Forbidden: Admins only" });
-    // }
 
     const updatedUser = await prisma.user.update({
       where: { id },
@@ -92,8 +89,6 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
         role: true,
       },
     });
-
-    console.log('super role updated', updatedUser);
 
     res.status(200).json({ user: updatedUser });
   } catch (err: any) {
