@@ -110,6 +110,8 @@ export const getCurrentUser = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ message: "Not authenticated" });
     }
 
+    const totalUser = await prisma.user.count();
+
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -127,7 +129,7 @@ export const getCurrentUser = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.status(200).json({ user });
+    res.status(200).json({ user, totalUser });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
