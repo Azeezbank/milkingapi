@@ -15,6 +15,7 @@ model Attendance {
   updatedAt DateTime      @updatedAt
   userId    String        @db.Uuid
   User      User          @relation(fields: [userId], references: [id])
+  @@unique([userId, date])
 }
 
 model User {

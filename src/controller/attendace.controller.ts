@@ -3,51 +3,39 @@ import prisma from "../lib/prisma.js";
 import { AuthRequest } from "../middleware/auth.middleware.js";
 import { JwtPayload } from "jsonwebtoken";
 import { v4 as uuidv4 } from 'uuid';
-import { startOfDay, endOfDay } from "date-fns";
 
 // ---------------- CREATE ATTENDANCE ----------------
-export const createAttendance = async (req: AuthRequest, res: Response) => {
+export const updateAttendance = async (req: AuthRequest, res: Response) => {
   try {
     const { status } = req.body;
     const userId = (req.user as JwtPayload)?.id; // got from middleware
 
     if (!userId) {
       console.error('Unauthorized')
-       return res.status(401).json({ message: "Unauthorized" });
+      return res.status(401).json({ message: "Unauthorized" });
     }
     if (!status) {
       console.error('All fields required')
       return res.status(400).json({ message: "All fields required" });
     }
 
-    // Check if attendance already exists for today
-    const todayStart = startOfDay(new Date());
-    const todayEnd = endOfDay(new Date());
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-    const existing = await prisma.attendance.findFirst({
+    const attendance = await prisma.attendance.update({
       where: {
-        userId,
-        date: {
-          gte: todayStart,
-          lte: todayEnd,
+        userId_date: {
+          userId,
+          date: today,
         },
       },
-    });
-
-    if (existing) {
-      return res.status(400).json({ message: "Attendance already marked for today" });
-    }
-
-    const attendance = await prisma.attendance.create({
       data: {
-        id: uuidv4(),
         date: new Date(),
-        status,
-        userId
+        status
       }
     });
 
-    res.status(201).json({ message: "Attendance created", attendance });
+    res.status(201).json({ message: "Attendance updated", attendance });
   } catch (error: any) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
@@ -95,8 +83,8 @@ export const deleteAttendance = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     const userId = (req.user as JwtPayload)?.id;
     if (!userId) {
-        console.error('Unauthorized')
-        return res.status(401).json({ message: "Unauthorized" });
+      console.error('Unauthorized')
+      return res.status(401).json({ message: "Unauthorized" });
     }
 
     // ensure user can only delete their own attendance
@@ -109,4 +97,26 @@ export const deleteAttendance = async (req: AuthRequest, res: Response) => {
     console.error(error);
     res.status(500).json({ message: "Server error" });
   }
+};
+
+
+export const markAbsentForToday = async () => {
+
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+
+
+  const users = await prisma.user.findMany({
+    select: { id: true },
+  });
+
+  await prisma.attendance.createMany({
+    data: users.map((user) => ({
+      id: uuidv4(),
+      date: start,
+      status: "Absent",
+      userId: user.id,
+    })),
+    skipDuplicates: true, // ✅ WORKS HERE
+  });
 };

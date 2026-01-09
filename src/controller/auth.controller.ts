@@ -4,6 +4,7 @@ import prisma from "../lib/prisma.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import { v4 as uuidv4 } from 'uuid';
+import { markAbsentForToday } from "./attendace.controller.js";
 
 dotenv.config();
 
@@ -79,6 +80,13 @@ export const register = async (req: Request, res:Response) => {
 export const login = async (req: Request, res: Response) => {
   const { identifier, password } = req.body;
 
+  if (!identifier || !password) {
+    console.error('All fields are required')
+    return res.status(400).json({ message: "All fields are required" });
+  }
+
+   await markAbsentForToday();
+
   const user = await prisma.user.findFirst({ 
     where: { 
       OR: [ 
@@ -104,11 +112,21 @@ export const login = async (req: Request, res: Response) => {
     );
 
     // send JWT as cookie
-    res.cookie("token", token, {
+
+//Localhost Testing
+// res.cookie("token", token, {
+//   httpOnly: true,
+//   secure: false, // must be false on localhost
+//   sameSite: "lax", // "lax" or "strict" works locally
+//   maxAge: 60 * 60 * 1000,
+// });
+
+//Production Deployment
+res.cookie("token", token, {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production", // must be true on HTTPS
-  sameSite: "none",   // allow cross-origin cookies
-  maxAge: 60 * 60 * 1000 // 1 hour
+  secure: true,
+  sameSite: "none", // allow cross-origin cookies
+  maxAge: 60 * 60 * 1000,
 });
 
   res.status(200).json({ message: "Login successful" });

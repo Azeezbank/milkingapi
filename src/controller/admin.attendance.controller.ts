@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import prisma from "../lib/prisma.js";
-import { JwtPayload } from "jsonwebtoken";
 import { AuthRequest } from "../middleware/auth.middleware.js";
 
 // GET /api/v1/admin/attendance
