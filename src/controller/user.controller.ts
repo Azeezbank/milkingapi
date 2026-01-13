@@ -7,9 +7,6 @@ import { JwtPayload } from "jsonwebtoken";
 // GET all users
 export const getAllusers = async (req: AuthRequest, res: Response) => {
   try {
-    // if (req.user?.role !== "admin") {
-    //   return res.status(403).json({ message: "Forbidden: Admins only" });
-    // }
 
     const users = await prisma.user.findMany({
       select: {

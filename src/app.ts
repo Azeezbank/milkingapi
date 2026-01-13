@@ -10,6 +10,8 @@ import adminProtected from "./routes/admin.protected.js";
 import user from "./routes/user.route.js";
 import userCheck from "./routes/user.route.js";
 import cors from "cors";
+import createAnimal from "./routes/admin.milk.route.js";
+import milkSumary from "./routes/user.milk.route.js";
 
 const app = express();
 
@@ -47,5 +49,7 @@ app.use("/api/v1/attendance", attendanceRoutes);
 app.use("/api/v1/admin", authMiddleware, requireAdmin, adminAttendance);
 app.use("/api/v1/admin/users", authMiddleware, requireAdmin, user);
 app.use("/api/v1/admin/users/my", authMiddleware, userCheck);
+app.use("/api/v1/admin/create/animals", authMiddleware, requireAdmin, createAnimal);
+app.use("/api/v1/milk/record", authMiddleware, milkSumary);
 
 export default app;

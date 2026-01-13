@@ -36,3 +36,38 @@ enum UserAttendace {
   Present
   Absent
 }
+
+model Animals {
+  id     String   @id     @db.Uuid
+  animalTag      String 
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime    @updatedAt
+  milkRecord   MilkRecord[]
+}
+
+model MilkRecord {
+  id    String   @id     @db.Uuid
+  date    DateTime
+  animalTag      String
+  animalId    String    @db.Uuid
+  animal    Animals   @relation(fields: [animalId], references: [id])
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime   @updatedAt
+  session     Milksessions[]
+  
+  @@unique([animalId, date])
+}
+
+model Milksessions {
+  id      String     @id    @db.Uuid
+  time     DateTime
+  period    String
+  quantity    Decimal    @db.Decimal(10,2)
+  recordId    String     @db.Uuid
+  recorder     String
+  record      MilkRecord    @relation(fields: [recordId], references: [id])
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime   @updatedAt
+
+   @@unique([recordId, period])
+}
