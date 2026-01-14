@@ -6,46 +6,46 @@ import { v4 as uuidv4 } from 'uuid';
 
 
 export const milkingAnimals = async (req: AuthRequest, res: Response) => {
-    const { animalTag } = req.body;
-    try {
-        const isExist = await prisma.animals.findFirst({
-            where: {
-                animalTag
-            }
-        })
+  const { animalTag } = req.body;
+  try {
+    const isExist = await prisma.animals.findFirst({
+      where: {
+        animalTag
+      }
+    })
 
-        if (isExist) {
-            console.error('Animal is existing');
-            return res.status(400).json({ message: 'Animal is existing in the list' })
-        }
-
-        await prisma.animals.create({
-            data: {
-                id: uuidv4(),
-                animalTag
-            }
-        });
-
-        res.status(201).json({ message: 'Animal created' })
-    } catch (err: any) {
-        console.log('FRailed to create animal', err);
-        return res.status(500).json({ message: 'Internal server error' })
+    if (isExist) {
+      console.error('Animal is existing');
+      return res.status(400).json({ message: 'Animal is existing in the list' })
     }
+
+    await prisma.animals.create({
+      data: {
+        id: uuidv4(),
+        animalTag
+      }
+    });
+
+    res.status(201).json({ message: 'Animal created' })
+  } catch (err: any) {
+    console.log('FRailed to create animal', err);
+    return res.status(500).json({ message: 'Internal server error' })
+  }
 };
 
 
 export const getAnimals = async (req: AuthRequest, res: Response) => {
-    try {
-        const animals = await prisma.animals.findMany({
-            orderBy: {
-                createdAt: 'desc'
-            }
-        });
-        res.status(200).json({ animals });
-    } catch (err: any) {
-        console.error('Failed to fetch animals:', err);
-        return res.status(500).json({ message: 'Internal server error' });
-    }
+  try {
+    const animals = await prisma.animals.findMany({
+      orderBy: {
+        createdAt: 'asc'
+      }
+    });
+    res.status(200).json({ animals });
+  } catch (err: any) {
+    console.error('Failed to fetch animals:', err);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
 };
 
 
@@ -192,6 +192,19 @@ export const getMilkSummary = async (req: AuthRequest, res: Response) => {
       new Date(date as string)
     );
 
+    // Calculate previous period date
+    const prevDate = new Date(date as string);
+
+    if (range === "day") prevDate.setDate(prevDate.getDate() - 1);
+    if (range === "week") prevDate.setDate(prevDate.getDate() - 7);
+    if (range === "month") prevDate.setMonth(prevDate.getMonth() - 1);
+    if (range === "year") prevDate.setFullYear(prevDate.getFullYear() - 1);
+
+    const { start: prevStart, end: prevEnd } = getDateRange(
+      range as string,
+      prevDate
+    );
+
     /** WHERE CONDITION */
     const whereCondition: any = {
       record: {
@@ -210,35 +223,46 @@ export const getMilkSummary = async (req: AuthRequest, res: Response) => {
     }
 
     /** TRANSACTION */
-    const [sessions, totalCount, totalMilk] = await prisma.$transaction([
-      prisma.milksessions.findMany({
-        where: whereCondition,
-        include: {
-          record: {
-            select: {
-              date: true,
-              animalTag: true,
+
+    const [sessions, totalCount, totalMilk, previousTotalMilk] =
+      await prisma.$transaction([
+        prisma.milksessions.findMany({
+          where: whereCondition,
+          include: {
+            record: {
+              select: {
+                date: true,
+                animalTag: true,
+              },
             },
           },
-        },
-        orderBy: {
-          time: "desc",
-        },
-        skip,
-        take: pageSize,
-      }),
+          orderBy: { time: "desc" },
+          skip,
+          take: pageSize,
+        }),
 
-      prisma.milksessions.count({
-        where: whereCondition,
-      }),
+        prisma.milksessions.count({
+          where: whereCondition,
+        }),
 
-      prisma.milksessions.aggregate({
-        where: whereCondition,
-        _sum: {
-          quantity: true,
-        },
-      }),
-    ]);
+        prisma.milksessions.aggregate({
+          where: whereCondition,
+          _sum: { quantity: true },
+        }),
+
+        // 👇 PREVIOUS PERIOD TOTAL
+        prisma.milksessions.aggregate({
+          where: {
+            record: {
+              date: {
+                gte: prevStart,
+                lte: prevEnd,
+              },
+            },
+          },
+          _sum: { quantity: true },
+        }),
+      ]);
 
     /** FORMAT RESPONSE */
     const records = sessions.map((s) => ({
@@ -253,13 +277,17 @@ export const getMilkSummary = async (req: AuthRequest, res: Response) => {
     res.status(200).json({
       range,
       period: { start, end },
+
       totalMilk: totalMilk._sum.quantity || 0,
+      previousTotalMilk: previousTotalMilk._sum.quantity || 0,
+
       pagination: {
         page: pageNumber,
         limit: pageSize,
         totalRecords: totalCount,
         totalPages: Math.ceil(totalCount / pageSize),
       },
+
       records,
     });
   } catch (err) {
