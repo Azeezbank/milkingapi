@@ -1,7 +1,7 @@
 import { Response } from "express";
-import { AuthRequest } from "../middleware/auth.middleware";
+import { AuthRequest } from "../middleware/auth.middleware.js";
 import { JwtPayload } from "jsonwebtoken";
-import prisma from "../lib/prisma";
+import prisma from "../lib/prisma.js";
 import { v4 as uuidv4 } from 'uuid';
 
 
