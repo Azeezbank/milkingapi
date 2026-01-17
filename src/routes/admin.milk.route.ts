@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { milkingAnimals, createMilkRecord } from "../controller/milking.animals.controller";
+import { milkingAnimals, createMilkRecord } from "../controller/milking.animals.controller.js";
 
 
 const router = Router();
