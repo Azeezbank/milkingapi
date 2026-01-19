@@ -30,6 +30,7 @@ model User {
   createdAt  DateTime     @default(now())
   updatedAt  DateTime     @updatedAt
   Attendance Attendance[]
+  workOffDays    WorkOffDays[]
 }
 
 enum UserAttendace {
@@ -70,4 +71,30 @@ model Milksessions {
   updatedAt    DateTime   @updatedAt
 
    @@unique([recordId, period])
+}
+
+
+model WorkOffDays {
+  id     String   @id    @db.Uuid
+  userId   String   @db.Uuid
+  date     DateTime
+  month    Int
+  year     Int
+  used     Boolean  @default(false)
+  usedAt    DateTime?
+  createdAt   DateTime   @default(now())
+  user       User     @relation(fields: [userId], references: [id])
+  
+  @@unique([userId, date])
+}
+
+model WorkOffSettings {
+  id        String   @id @db.Uuid
+  month     Int
+  year      Int
+  maxDays   Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([month, year])
 }

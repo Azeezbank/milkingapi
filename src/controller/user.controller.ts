@@ -20,7 +20,7 @@ export const getAllusers = async (req: AuthRequest, res: Response) => {
         updatedAt: true,
       },
       orderBy: {
-        createdAt: "desc",
+        name: "asc",
       },
     });
 

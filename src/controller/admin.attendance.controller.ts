@@ -71,8 +71,9 @@ export const getAdminAttendance = async (req: AuthRequest, res: Response) => {
 export const getAttendanceById = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.params.id;
-    const record = await prisma.attendance.findFirst({ where: { userId },
-    include: { User: true }
+    const record = await prisma.attendance.findFirst({
+      where: { userId },
+      include: { User: true }
     });
     if (!record) {
       console.error("Record not found for userId:", userId);
@@ -103,3 +104,21 @@ export const updateAttendanceStatus = async (req: AuthRequest, res: Response) =>
     res.status(500).json({ message: "Server Error" });
   }
 };
+
+export const totalpresent = async (req: AuthRequest, res: Response) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const present = await prisma.attendance.count({
+      where: {
+        status: 'Present',
+        date: today
+      }
+    })
+
+    res.status(200).json(present)
+  } catch (err: any) {
+    console.error(err)
+    return res.status(500).json({ message: 'Failed to select total present' })
+  }
+}

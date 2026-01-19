@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import { v4 as uuidv4 } from 'uuid';
 import { markAbsentForToday } from "./attendace.controller.js";
+import { autoMarkWorkOffUsed } from "./off.controller.js";
 
 dotenv.config();
 
@@ -110,6 +111,8 @@ export const login = async (req: Request, res: Response) => {
       JWT_SECRET!,
       { expiresIn: "1h" }
     );
+
+    await autoMarkWorkOffUsed();
 
     // send JWT as cookie
 

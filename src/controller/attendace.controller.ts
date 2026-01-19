@@ -30,7 +30,6 @@ export const updateAttendance = async (req: AuthRequest, res: Response) => {
         },
       },
       data: {
-        date: new Date(),
         status
       }
     });
