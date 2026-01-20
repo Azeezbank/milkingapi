@@ -38,7 +38,7 @@ export const getAnimals = async (req: AuthRequest, res: Response) => {
   try {
     const animals = await prisma.animals.findMany({
       orderBy: {
-        createdAt: 'asc'
+        animalTag: 'asc'
       }
     });
     res.status(200).json({ animals });
@@ -223,7 +223,6 @@ export const getMilkSummary = async (req: AuthRequest, res: Response) => {
     }
 
     /** TRANSACTION */
-
     const [sessions, totalCount, totalMilk, previousTotalMilk] =
       await prisma.$transaction([
         prisma.milksessions.findMany({
