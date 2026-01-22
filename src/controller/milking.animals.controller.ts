@@ -169,6 +169,133 @@ const getDateRange = (range: string, date: Date) => {
 };
 
 
+// export const getMilkSummary = async (req: AuthRequest, res: Response) => {
+//   try {
+//     const {
+//       range = "day",
+//       date,
+//       animalTag,
+//       page = "1",
+//       limit = "10",
+//     } = req.query;
+
+//     if (!date) {
+//       return res.status(400).json({ message: "Date is required" });
+//     }
+
+//     const pageNumber = Number(page);
+//     const pageSize = Number(limit);
+//     const skip = (pageNumber - 1) * pageSize;
+
+//     const { start, end } = getDateRange(
+//       range as string,
+//       new Date(date as string)
+//     );
+
+//     // Calculate previous period date
+//     const prevDate = new Date(date as string);
+
+//     if (range === "day") prevDate.setDate(prevDate.getDate() - 1);
+//     if (range === "week") prevDate.setDate(prevDate.getDate() - 7);
+//     if (range === "month") prevDate.setMonth(prevDate.getMonth() - 1);
+//     if (range === "year") prevDate.setFullYear(prevDate.getFullYear() - 1);
+
+//     const { start: prevStart, end: prevEnd } = getDateRange(
+//       range as string,
+//       prevDate
+//     );
+
+//     /** WHERE CONDITION */
+//     const whereCondition: any = {
+//       record: {
+//         date: {
+//           gte: start,
+//           lte: end,
+//         },
+//       },
+//     };
+
+//     if (animalTag) {
+//       whereCondition.record.animalTag = {
+//         contains: animalTag as string,
+//         mode: "insensitive",
+//       };
+//     }
+
+//     /** TRANSACTION */
+//     const [sessions, totalCount, totalMilk, previousTotalMilk] =
+//       await prisma.$transaction([
+//         prisma.milksessions.findMany({
+//           where: whereCondition,
+//           include: {
+//             record: {
+//               select: {
+//                 date: true,
+//                 animalTag: true,
+//               },
+//             },
+//           },
+//           orderBy: { time: "desc" },
+//           skip,
+//           take: pageSize,
+//         }),
+
+//         prisma.milksessions.count({
+//           where: whereCondition,
+//         }),
+
+//         prisma.milksessions.aggregate({
+//           where: whereCondition,
+//           _sum: { quantity: true },
+//         }),
+
+//         // 👇 PREVIOUS PERIOD TOTAL
+//         prisma.milksessions.aggregate({
+//           where: {
+//             record: {
+//               date: {
+//                 gte: prevStart,
+//                 lte: prevEnd,
+//               },
+//             },
+//           },
+//           _sum: { quantity: true },
+//         }),
+//       ]);
+
+//     /** FORMAT RESPONSE */
+//     const records = sessions.map((s) => ({
+//       date: s.record.date,
+//       animalTag: s.record.animalTag,
+//       time: s.time,
+//       period: s.period,
+//       quantity: s.quantity,
+//       recorder: s.recorder,
+//     }));
+
+//     res.status(200).json({
+//       range,
+//       period: { start, end },
+
+//       totalMilk: totalMilk._sum.quantity || 0,
+//       previousTotalMilk: previousTotalMilk._sum.quantity || 0,
+
+//       pagination: {
+//         page: pageNumber,
+//         limit: pageSize,
+//         totalRecords: totalCount,
+//         totalPages: Math.ceil(totalCount / pageSize),
+//       },
+
+//       records,
+//     });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ message: "Internal server error" });
+//   }
+// };
+
+
 export const getMilkSummary = async (req: AuthRequest, res: Response) => {
   try {
     const {
@@ -187,23 +314,16 @@ export const getMilkSummary = async (req: AuthRequest, res: Response) => {
     const pageSize = Number(limit);
     const skip = (pageNumber - 1) * pageSize;
 
-    const { start, end } = getDateRange(
-      range as string,
-      new Date(date as string)
-    );
+    const { start, end } = getDateRange(range as string, new Date(date as string));
 
     // Calculate previous period date
     const prevDate = new Date(date as string);
-
     if (range === "day") prevDate.setDate(prevDate.getDate() - 1);
     if (range === "week") prevDate.setDate(prevDate.getDate() - 7);
     if (range === "month") prevDate.setMonth(prevDate.getMonth() - 1);
     if (range === "year") prevDate.setFullYear(prevDate.getFullYear() - 1);
 
-    const { start: prevStart, end: prevEnd } = getDateRange(
-      range as string,
-      prevDate
-    );
+    const { start: prevStart, end: prevEnd } = getDateRange(range as string, prevDate);
 
     /** WHERE CONDITION */
     const whereCondition: any = {
@@ -217,12 +337,12 @@ export const getMilkSummary = async (req: AuthRequest, res: Response) => {
 
     if (animalTag) {
       whereCondition.record.animalTag = {
-        contains: animalTag as string,
+        contains: Array.isArray(animalTag) ? String(animalTag[0]) : String(animalTag),
         mode: "insensitive",
       };
     }
 
-    /** TRANSACTION */
+    /** PAGINATED TRANSACTION */
     const [sessions, totalCount, totalMilk, previousTotalMilk] =
       await prisma.$transaction([
         prisma.milksessions.findMany({
@@ -249,7 +369,6 @@ export const getMilkSummary = async (req: AuthRequest, res: Response) => {
           _sum: { quantity: true },
         }),
 
-        // 👇 PREVIOUS PERIOD TOTAL
         prisma.milksessions.aggregate({
           where: {
             record: {
@@ -263,7 +382,7 @@ export const getMilkSummary = async (req: AuthRequest, res: Response) => {
         }),
       ]);
 
-    /** FORMAT RESPONSE */
+    /** FORMAT RECORDS */
     const records = sessions.map((s) => ({
       date: s.record.date,
       animalTag: s.record.animalTag,
@@ -273,12 +392,76 @@ export const getMilkSummary = async (req: AuthRequest, res: Response) => {
       recorder: s.recorder,
     }));
 
+    /** NEW FEATURE: Fetch all sessions for full avg calculation */
+    const allSessions = await prisma.milksessions.findMany({
+      where: {
+        record: {
+          date: {
+            gte: start,
+            lte: end,
+          },
+          ...(animalTag
+            ? {
+                animalTag: {
+                  contains: Array.isArray(animalTag) ? String(animalTag[0]) : String(animalTag),
+                  mode: "insensitive",
+                },
+              }
+            : {}),
+        },
+      },
+      include: {
+        record: {
+          select: {
+            date: true,
+            animalTag: true,
+          },
+        },
+      },
+    });
+
+    const animalDaysMap: Record<string, Set<string>> = {};
+    const animalMilkMap: Record<string, number> = {};
+
+    allSessions.forEach((s) => {
+      const animal = s.record.animalTag;
+      const dayStr = new Date(s.record.date).toDateString();
+
+      if (!animalDaysMap[animal]) animalDaysMap[animal] = new Set();
+      animalDaysMap[animal].add(dayStr);
+
+      if (!animalMilkMap[animal]) animalMilkMap[animal] = 0;
+      animalMilkMap[animal] += Number(s.quantity);
+    });
+
+    const avgMilkingDays =
+      Object.keys(animalDaysMap).length > 0
+        ? Object.values(animalDaysMap).reduce((sum, days) => sum + days.size, 0) /
+          Object.keys(animalDaysMap).length
+        : 0;
+
+    const tag = animalTag ? (Array.isArray(animalTag) ? String(animalTag[0]) : String(animalTag)) : null;
+    let filteredAnimalDays = 0;
+    let filteredAnimalMilk = 0;
+    if (tag && animalDaysMap[tag]) {
+      filteredAnimalDays = animalDaysMap[tag].size;
+      filteredAnimalMilk = animalMilkMap[tag];
+    }
+
     res.status(200).json({
       range,
       period: { start, end },
 
       totalMilk: totalMilk._sum.quantity || 0,
       previousTotalMilk: previousTotalMilk._sum.quantity || 0,
+
+      avgMilkingDays,
+      filteredAnimal: tag
+        ? {
+            daysMilked: filteredAnimalDays,
+            totalMilk: filteredAnimalMilk,
+          }
+        : null,
 
       pagination: {
         page: pageNumber,
@@ -288,6 +471,7 @@ export const getMilkSummary = async (req: AuthRequest, res: Response) => {
       },
 
       records,
+      animalMilkMap,
     });
   } catch (err) {
     console.error(err);
