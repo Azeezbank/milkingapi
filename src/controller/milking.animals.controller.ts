@@ -195,6 +195,14 @@ export const getMilkSummary = async (req: AuthRequest, res: Response) => {
     if (range === "month") prevDate.setMonth(prevDate.getMonth() - 1);
     if (range === "year") prevDate.setFullYear(prevDate.getFullYear() - 1);
 
+
+    let trendGroup: "single" | "day" | "week" | "month";
+
+    if (range === "day") trendGroup = "single";
+    else if (range === "week") trendGroup = "day";
+    else if (range === "month") trendGroup = "week";
+    else trendGroup = "month"; // year
+
     const { start: prevStart, end: prevEnd } = getDateRange(range as string, prevDate);
 
     /** WHERE CONDITION */
@@ -274,11 +282,11 @@ export const getMilkSummary = async (req: AuthRequest, res: Response) => {
           },
           ...(animalTag
             ? {
-                animalTag: {
-                  contains: Array.isArray(animalTag) ? String(animalTag[0]) : String(animalTag),
-                  mode: "insensitive",
-                },
-              }
+              animalTag: {
+                contains: Array.isArray(animalTag) ? String(animalTag[0]) : String(animalTag),
+                mode: "insensitive",
+              },
+            }
             : {}),
         },
       },
@@ -309,8 +317,40 @@ export const getMilkSummary = async (req: AuthRequest, res: Response) => {
     const avgMilkingDays =
       Object.keys(animalDaysMap).length > 0
         ? Object.values(animalDaysMap).reduce((sum, days) => sum + days.size, 0) /
-          Object.keys(animalDaysMap).length
+        Object.keys(animalDaysMap).length
         : 0;
+
+    const trendMap: Record<string, number> = {};
+
+    allSessions.forEach((s) => {
+      const d = new Date(s.record.date);
+      let label = "";
+
+      if (trendGroup === "single") {
+        label = "Today";
+      }
+
+      if (trendGroup === "day") {
+        label = d.toLocaleDateString("en-US", { weekday: "short" });
+      }
+
+      if (trendGroup === "week") {
+        const week = Math.min(4, Math.ceil(d.getDate() / 7));
+        label = `Week ${week}`;
+      }
+
+      if (trendGroup === "month") {
+        label = d.toLocaleDateString("en-US", { month: "short" });
+      }
+
+      trendMap[label] = (trendMap[label] || 0) + Number(s.quantity);
+    });
+
+
+    const trendData = Object.entries(trendMap).map(([label, total]) => ({
+      label,
+      total: Number(total.toFixed(1)), // ← round to 1 decimal
+    }));
 
     const tag = animalTag ? (Array.isArray(animalTag) ? String(animalTag[0]) : String(animalTag)) : null;
     let filteredAnimalDays = 0;
@@ -330,9 +370,9 @@ export const getMilkSummary = async (req: AuthRequest, res: Response) => {
       avgMilkingDays,
       filteredAnimal: tag
         ? {
-            daysMilked: filteredAnimalDays,
-            totalMilk: filteredAnimalMilk,
-          }
+          daysMilked: filteredAnimalDays,
+          totalMilk: filteredAnimalMilk,
+        }
         : null,
 
       pagination: {
@@ -344,6 +384,7 @@ export const getMilkSummary = async (req: AuthRequest, res: Response) => {
 
       records,
       animalMilkMap,
+      trendData,
     });
   } catch (err) {
     console.error(err);
