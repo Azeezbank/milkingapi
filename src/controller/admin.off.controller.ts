@@ -23,7 +23,7 @@ export const setMonthlyLimit = async (req: AuthRequest, res: Response) => {
     },
   });
 
-  res.status(200).json({ message: "Monthly limit saved", setting });
+  res.status(200).json({ message: "Monthly off limit saved", setting });
 };
 
 
