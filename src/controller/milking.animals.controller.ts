@@ -51,7 +51,7 @@ export const getAnimals = async (req: AuthRequest, res: Response) => {
 
 
 export const createMilkRecord = async (req: AuthRequest, res: Response) => {
-  const { animalId, animalTag, period, quantity } = req.body;
+  const { animalId, animalTag, period, quantity, date } = req.body;
   const userId = (req.user as JwtPayload).id;
 
   if (!animalId || !animalTag || !period || !quantity) {
@@ -71,7 +71,7 @@ export const createMilkRecord = async (req: AuthRequest, res: Response) => {
     }
 
 
-    const today = new Date();
+    const today = new Date(date);
     today.setHours(0, 0, 0, 0);
 
     const result = await prisma.$transaction(async (tx) => {
@@ -167,134 +167,6 @@ const getDateRange = (range: string, date: Date) => {
 
   return { start, end };
 };
-
-
-// export const getMilkSummary = async (req: AuthRequest, res: Response) => {
-//   try {
-//     const {
-//       range = "day",
-//       date,
-//       animalTag,
-//       page = "1",
-//       limit = "10",
-//     } = req.query;
-
-//     if (!date) {
-//       return res.status(400).json({ message: "Date is required" });
-//     }
-
-//     const pageNumber = Number(page);
-//     const pageSize = Number(limit);
-//     const skip = (pageNumber - 1) * pageSize;
-
-//     const { start, end } = getDateRange(
-//       range as string,
-//       new Date(date as string)
-//     );
-
-//     // Calculate previous period date
-//     const prevDate = new Date(date as string);
-
-//     if (range === "day") prevDate.setDate(prevDate.getDate() - 1);
-//     if (range === "week") prevDate.setDate(prevDate.getDate() - 7);
-//     if (range === "month") prevDate.setMonth(prevDate.getMonth() - 1);
-//     if (range === "year") prevDate.setFullYear(prevDate.getFullYear() - 1);
-
-//     const { start: prevStart, end: prevEnd } = getDateRange(
-//       range as string,
-//       prevDate
-//     );
-
-//     /** WHERE CONDITION */
-//     const whereCondition: any = {
-//       record: {
-//         date: {
-//           gte: start,
-//           lte: end,
-//         },
-//       },
-//     };
-
-//     if (animalTag) {
-//       whereCondition.record.animalTag = {
-//         contains: animalTag as string,
-//         mode: "insensitive",
-//       };
-//     }
-
-//     /** TRANSACTION */
-//     const [sessions, totalCount, totalMilk, previousTotalMilk] =
-//       await prisma.$transaction([
-//         prisma.milksessions.findMany({
-//           where: whereCondition,
-//           include: {
-//             record: {
-//               select: {
-//                 date: true,
-//                 animalTag: true,
-//               },
-//             },
-//           },
-//           orderBy: { time: "desc" },
-//           skip,
-//           take: pageSize,
-//         }),
-
-//         prisma.milksessions.count({
-//           where: whereCondition,
-//         }),
-
-//         prisma.milksessions.aggregate({
-//           where: whereCondition,
-//           _sum: { quantity: true },
-//         }),
-
-//         // 👇 PREVIOUS PERIOD TOTAL
-//         prisma.milksessions.aggregate({
-//           where: {
-//             record: {
-//               date: {
-//                 gte: prevStart,
-//                 lte: prevEnd,
-//               },
-//             },
-//           },
-//           _sum: { quantity: true },
-//         }),
-//       ]);
-
-//     /** FORMAT RESPONSE */
-//     const records = sessions.map((s) => ({
-//       date: s.record.date,
-//       animalTag: s.record.animalTag,
-//       time: s.time,
-//       period: s.period,
-//       quantity: s.quantity,
-//       recorder: s.recorder,
-//     }));
-
-//     res.status(200).json({
-//       range,
-//       period: { start, end },
-
-//       totalMilk: totalMilk._sum.quantity || 0,
-//       previousTotalMilk: previousTotalMilk._sum.quantity || 0,
-
-//       pagination: {
-//         page: pageNumber,
-//         limit: pageSize,
-//         totalRecords: totalCount,
-//         totalPages: Math.ceil(totalCount / pageSize),
-//       },
-
-//       records,
-//     });
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ message: "Internal server error" });
-//   }
-// };
-
 
 export const getMilkSummary = async (req: AuthRequest, res: Response) => {
   try {

@@ -16,8 +16,7 @@ export const getAllusers = async (req: AuthRequest, res: Response) => {
         phone: true,
         username: true,
         role: true,
-        createdAt: true,
-        updatedAt: true,
+        createdAt: true
       },
       orderBy: {
         name: "asc",

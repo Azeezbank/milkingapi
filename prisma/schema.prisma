@@ -12,7 +12,6 @@ model Attendance {
   date      DateTime
   status    UserAttendace @default(Absent)
   createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
   userId    String        @db.Uuid
   User      User          @relation(fields: [userId], references: [id])
   @@unique([userId, date])
@@ -28,7 +27,6 @@ model User {
   role       String
   superRole  String?
   createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
   Attendance Attendance[]
   workOffDays    WorkOffDays[]
 }
@@ -42,7 +40,6 @@ model Animals {
   id     String   @id     @db.Uuid
   animalTag      String 
   createdAt    DateTime   @default(now())
-  updatedAt    DateTime    @updatedAt
   milkRecord   MilkRecord[]
 }
 
@@ -53,7 +50,6 @@ model MilkRecord {
   animalId    String    @db.Uuid
   animal    Animals   @relation(fields: [animalId], references: [id])
   createdAt    DateTime    @default(now())
-  updatedAt    DateTime   @updatedAt
   session     Milksessions[]
   
   @@unique([animalId, date])
@@ -68,7 +64,6 @@ model Milksessions {
   recorder     String
   record      MilkRecord    @relation(fields: [recordId], references: [id])
   createdAt    DateTime    @default(now())
-  updatedAt    DateTime   @updatedAt
 
    @@unique([recordId, period])
 }
@@ -94,7 +89,6 @@ model WorkOffSettings {
   year      Int
   maxDays   Int
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
   @@unique([month, year])
 }
