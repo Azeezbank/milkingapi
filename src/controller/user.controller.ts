@@ -4,7 +4,7 @@ import { AuthRequest } from "../middleware/auth.middleware.js";
 import { JwtPayload } from "jsonwebtoken";
 
 
-// GET all users
+// GET all the users
 export const getAllusers = async (req: AuthRequest, res: Response) => {
   try {
 
