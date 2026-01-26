@@ -37,10 +37,6 @@ export const getSingleUser = async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
 
   try {
-    // if (req.user?.role !== "admin") {
-    //   return res.status(403).json({ message: "Forbidden: Admins only" });
-    // }
-
     const user = await prisma.user.findUnique({
       where: { id },
       select: {
