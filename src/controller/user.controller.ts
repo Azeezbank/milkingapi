@@ -31,7 +31,6 @@ export const getAllusers = async (req: AuthRequest, res: Response) => {
 };
 
 
-
 // GET single user
 export const getSingleUser = async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
