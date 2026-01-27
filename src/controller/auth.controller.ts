@@ -86,8 +86,6 @@ export const login = async (req: Request, res: Response) => {
     return res.status(400).json({ message: "All fields are required" });
   }
 
-   await markAbsentForToday();
-
   const user = await prisma.user.findFirst({ 
     where: { 
       OR: [ 
@@ -109,28 +107,11 @@ export const login = async (req: Request, res: Response) => {
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role, superRole: user.superRole },
       JWT_SECRET!,
-      { expiresIn: "1h" }
+      { expiresIn: "30m" }
     );
 
-    await autoMarkWorkOffUsed();
+    await markAbsentForToday();
+  await autoMarkWorkOffUsed();
 
-    // send JWT as cookie
-
-//Localhost Testing
-// res.cookie("token", token, {
-//   httpOnly: true,
-//   secure: false, // must be false on localhost
-//   sameSite: "lax", // "lax" or "strict" works locally
-//   maxAge: 60 * 60 * 1000,
-// });
-
-//Production Deployment
-res.cookie("token", token, {
-  httpOnly: true,
-  secure: true,
-  sameSite: "none", // allow cross-origin cookies
-  maxAge: 60 * 60 * 1000,
-});
-
-  res.status(200).json({ message: "Login successful" });
+  res.status(200).json({ message: "Login successful", token });
 };
