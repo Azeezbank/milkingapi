@@ -26,20 +26,41 @@ const allowedOrigins = [
   "https://milking-three.vercel.app"  // deployed frontend
 ];
 
-app.use(cors({
-  origin: function(origin, callback) {
-    // allow requests with no origin (like Postman)
-    if (!origin) return callback(null, true);
+// app.use(cors({
+//   origin: function(origin, callback) {
+//     // allow requests with no origin (like Postman)
+//     if (!origin) return callback(null, true);
 
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error(`Origin ${origin} not allowed by CORS`));
-    }
-  },
-  credentials: true,                  // allow cookies
-  methods: ['GET', 'POST', 'PUT', 'DELETE']
-}));
+//     if (allowedOrigins.includes(origin)) {
+//       callback(null, true);
+//     } else {
+//       callback(new Error(`Origin ${origin} not allowed by CORS`));
+//     }
+//   },
+//   credentials: true,                  // allow cookies
+//   methods: ['GET', 'POST', 'PUT', 'DELETE']
+// }));
+
+app.set("trust proxy", 1); // REQUIRED if hosted
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) {
+        // allow non-browser tools only
+        return callback(null, false);
+      }
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`Origin ${origin} not allowed by CORS`));
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+  })
+);
 
 //Protect page
 app.use("/api/v1/protected", authMiddleware, protect);
