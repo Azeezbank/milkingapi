@@ -12,7 +12,7 @@ dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET
 
-export const register = async (req: Request, res:Response) => {
+export const register = async (req: Request, res: Response) => {
   const { name, email, phone, username, password, confirmPassword, role } = req.body;
 
   try {
@@ -24,7 +24,7 @@ export const register = async (req: Request, res:Response) => {
 
     if (password !== confirmPassword) {
       console.error('Passwords do not match')
-      return  res.status(400).json({ message: "Passwords do not match" });
+      return res.status(400).json({ message: "Passwords do not match" });
     }
 
     // check if username or phone exists
@@ -86,12 +86,14 @@ export const login = async (req: Request, res: Response) => {
     return res.status(400).json({ message: "All fields are required" });
   }
 
-  const user = await prisma.user.findFirst({ 
-    where: { 
-      OR: [ 
-        { email: identifier }, 
-        { username: identifier} 
-      ] } });
+  const user = await prisma.user.findFirst({
+    where: {
+      OR: [
+        { email: identifier },
+        { username: identifier }
+      ]
+    }
+  });
   if (!user) {
     console.error('Invalid credentials')
     return res.status(401).json({ message: "Invalid credentials" });
@@ -103,14 +105,14 @@ export const login = async (req: Request, res: Response) => {
     return res.status(401).json({ message: "Invalid credentials" });
   }
 
-   // create JWT token
-    const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role, superRole: user.superRole },
-      JWT_SECRET!,
-      { expiresIn: "30m" }
-    );
+  // create JWT token
+  const token = jwt.sign(
+    { id: user.id, email: user.email, role: user.role, superRole: user.superRole },
+    JWT_SECRET!,
+    { expiresIn: "30m" }
+  );
 
-    await markAbsentForToday();
+  await markAbsentForToday();
   await autoMarkWorkOffUsed();
 
   res.status(200).json({ message: "Login successful", token });
