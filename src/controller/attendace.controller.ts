@@ -19,8 +19,8 @@ export const updateAttendance = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ message: "All fields required" });
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const now = new Date();
+    const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
 
     const attendance = await prisma.attendance.update({
       where: {
@@ -101,9 +101,8 @@ export const deleteAttendance = async (req: AuthRequest, res: Response) => {
 
 export const markAbsentForToday = async () => {
 
-  const start = new Date();
-  start.setHours(0, 0, 0, 0);
-
+  const now = new Date();
+  const start = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
 
   const users = await prisma.user.findMany({
     select: { id: true },
