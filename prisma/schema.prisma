@@ -29,6 +29,7 @@ model User {
   createdAt  DateTime     @default(now())
   Attendance Attendance[]
   workOffDays    WorkOffDays[]
+  dailyWorkReport   DailyWorkReport[]
 }
 
 enum UserAttendace {
@@ -91,4 +92,28 @@ model WorkOffSettings {
   createdAt DateTime @default(now())
 
   @@unique([month, year])
+}
+
+
+model DailyWorkReport {
+  id        String   @id @db.Uuid
+  userId    String   @db.Uuid
+  date      DateTime
+  title     String?   @db.Text
+  tasks     String    @db.Text
+  challenges String?  @db.Text
+  nextPlan  String?   @db.Text
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@unique([userId, date])
+}
+
+model AISummary {
+  id        String   @id @db.Uuid
+  type      String   // "weekly" or "monthly"
+  startDate DateTime
+  endDate   DateTime
+  content   String   @db.Text
+  createdAt DateTime @default(now())
 }

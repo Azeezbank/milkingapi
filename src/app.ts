@@ -13,7 +13,8 @@ import cors from "cors";
 import createAnimal from "./routes/admin.milk.route.js";
 import milkSumary from "./routes/user.milk.route.js";
 import off from    "./routes/off.route.js";
-import adminoff from "./routes/admin.off.route.js"
+import adminoff from "./routes/admin.off.route.js";
+import report from "./routes/report.router.js";
 
 const app = express();
 
@@ -55,5 +56,7 @@ app.use("/api/v1/admin/create/animals", authMiddleware, requireAdmin, createAnim
 app.use("/api/v1/milk/record", authMiddleware, milkSumary);
 app.use("/api/v1/off", authMiddleware, off);
 app.use("/api/v1/admin/off", authMiddleware, requireAdmin, adminoff)
+app.use("/api/v1/report", authMiddleware, report);
+app.use("/api/v1/admin/report", authMiddleware, requireAdmin, report)
 
 export default app;
