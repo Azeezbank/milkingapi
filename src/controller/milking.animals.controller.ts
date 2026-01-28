@@ -300,6 +300,14 @@ export const getMilkSummary = async (req: AuthRequest, res: Response) => {
       },
     });
 
+    const animalsMilked = new Set(
+  allSessions.map((s) => s.record.animalTag)
+).size;
+
+const avgPerAnimal =
+  animalsMilked > 0 ? (Number(totalMilk._sum.quantity) || 0) / animalsMilked : 0;
+
+
     const animalDaysMap: Record<string, Set<string>> = {};
     const animalMilkMap: Record<string, number> = {};
 
@@ -359,6 +367,7 @@ export const getMilkSummary = async (req: AuthRequest, res: Response) => {
       filteredAnimalDays = animalDaysMap[tag].size;
       filteredAnimalMilk = animalMilkMap[tag];
     }
+    
 
     res.status(200).json({
       range,
@@ -385,6 +394,8 @@ export const getMilkSummary = async (req: AuthRequest, res: Response) => {
       records,
       animalMilkMap,
       trendData,
+      animalsMilked,
+      avgPerAnimal
     });
   } catch (err) {
     console.error(err);
