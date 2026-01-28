@@ -351,14 +351,19 @@ const avgPerAnimal =
         label = d.toLocaleDateString("en-US", { month: "short" });
       }
 
-      trendMap[label] = (trendMap[label] || 0) + Number(s.quantity);
+      // trendMap[label] = (trendMap[label] || 0) + Number(s.quantity);
+      trendMap[label] = (trendMap[label] || 0) + (Number(s.quantity) || 0);
     });
 
 
+    // const trendData = Object.entries(trendMap).map(([label, total]) => ({
+    //   label,
+    //   total: Number(total.toFixed(1)), // ← round to 1 decimal
+    // }));
     const trendData = Object.entries(trendMap).map(([label, total]) => ({
-      label,
-      total: Number(total.toFixed(1)), // ← round to 1 decimal
-    }));
+  label,
+  total: Number((total ?? 0).toFixed(1)),
+}));
 
     const tag = animalTag ? (Array.isArray(animalTag) ? String(animalTag[0]) : String(animalTag)) : null;
     let filteredAnimalDays = 0;
