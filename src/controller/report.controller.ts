@@ -18,7 +18,7 @@ export const createDailyWorkReport = async (req: AuthRequest, res: Response) => 
         const chosenDate = startOfDay(new Date(date)); // normalize to start of day
 
         const report = await prisma.dailyWorkReport.upsert({
-            where: { userId_date: { userId, date: chosenDate } },
+            where: { date: chosenDate },
             update: { title, tasks, challenges, nextPlan },
             create: {
                 id: uuidv4(),
@@ -42,7 +42,7 @@ export const createDailyWorkReport = async (req: AuthRequest, res: Response) => 
 export const getReportById = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const report = await prisma.dailyWorkReport.findUnique({
+    const report = await prisma.dailyWorkReport.findFirst({
       where: { id },
       include: { user: { select: { name: true } } },
     });

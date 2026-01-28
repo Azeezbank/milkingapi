@@ -15,6 +15,7 @@ import milkSumary from "./routes/user.milk.route.js";
 import off from    "./routes/off.route.js";
 import adminoff from "./routes/admin.off.route.js";
 import report from "./routes/report.router.js";
+import reportSummary from "./routes/reportSummary.route.js"
 
 const app = express();
 
@@ -79,5 +80,6 @@ app.use("/api/v1/off", authMiddleware, off);
 app.use("/api/v1/admin/off", authMiddleware, requireAdmin, adminoff)
 app.use("/api/v1/report", authMiddleware, report);
 app.use("/api/v1/admin/report", authMiddleware, requireAdmin, report)
+app.use("/api/v1/admin/summary", authMiddleware, requireAdmin, reportSummary);
 
 export default app;

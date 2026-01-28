@@ -106,14 +106,16 @@ model DailyWorkReport {
   createdAt DateTime  @default(now())
   user      User      @relation(fields: [userId], references: [id])
 
-  @@unique([userId, date])
+  @@unique([date])
 }
 
-model AISummary {
+model AiSummary {
   id        String   @id @db.Uuid
   type      String   // "weekly" or "monthly"
   startDate DateTime
   endDate   DateTime
   content   String   @db.Text
   createdAt DateTime @default(now())
+
+   @@unique([type, startDate, endDate])
 }
