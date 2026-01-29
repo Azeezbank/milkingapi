@@ -111,7 +111,7 @@ model DailyWorkReport {
 
 model AiSummary {
   id        String   @id @db.Uuid
-  type      String   // "weekly" or "monthly"
+  type      String   //"Daily", "weekly" or "monthly"
   startDate DateTime
   endDate   DateTime
   content   String   @db.Text

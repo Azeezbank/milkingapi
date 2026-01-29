@@ -1,92 +1,4 @@
 
-// import { Response } from "express";
-// import { AuthRequest } from "../middleware/auth.middleware.js";
-// import prisma from "../lib/prisma.js";
-// import openai from "../lib/openai.js";
-// import { v4 as uuidv4 } from "uuid";
-// import { JwtPayload } from "jsonwebtoken";
-
-// export const summarizeTodayReport = async (req: AuthRequest, res: Response) => {
-//     try {
-//         const userId = (req.user as JwtPayload)?.id;
-//         if (!userId) {
-//             return res.status(401).json({ message: "Unauthorized" });
-//         }
-
-//         const now = new Date();
-//         const today = new Date(Date.UTC(
-//             now.getUTCFullYear(),
-//             now.getUTCMonth(),
-//             now.getUTCDate()
-//         ));
-
-//         const report = await prisma.dailyWorkReport.findFirst({
-//             where: { date: today },
-//         });
-
-//         if (!report) {
-//             return res.status(404).json({ message: "No report for today" });
-//         }
-
-//         const reportText = `
-// Title: ${report.title ?? "N/A"}
-
-// Tasks Done:
-// ${report.tasks}
-
-// Challenges:
-// ${report.challenges ?? "None"}
-
-// Next Plan:
-// ${report.nextPlan ?? "None"}
-// `;
-
-//         const completion = await openai.chat.completions.create({
-//             model: "gpt-4o-mini",
-//             messages: [
-//                 {
-//                     role: "system",
-//                     content:
-//                         "You are a professional HR assistant. Summarize the daily work report clearly and professionally.",
-//                 },
-//                 { role: "user", content: reportText },
-//             ],
-//             temperature: 0.4,
-//         });
-
-//         const summary = completion.choices[0].message.content;
-
-//         const saved = await prisma.aiSummary.upsert({
-//             where: {
-//                 type_startDate_endDate: {
-//                     type: "daily",
-//                     startDate: today,
-//                     endDate: today,
-//                 },
-//             },
-//             update: {
-//                 content: summary!,
-//             },
-//             create: {
-//                 id: uuidv4(),
-//                 type: "daily",
-//                 startDate: today,
-//                 endDate: today,
-//                 content: summary!,
-//             },
-//         });
-
-//         res.status(200).json({
-//             message: "Summary generated",
-//             summary: saved,
-//         });
-//     } catch (err) {
-//         console.error("AI summary error:", err);
-//         res.status(500).json({ message: "Failed to generate summary" });
-//     }
-// };
-
-
 import { Response } from "express";
 import { AuthRequest } from "../middleware/auth.middleware.js";
 import prisma from "../lib/prisma.js";
@@ -210,4 +122,95 @@ export const getAiSummary = async (req: AuthRequest, res: Response) => {
   });
 
   res.status(200).json(summaries);
+};
+
+
+
+//Manuall Al summary generation
+  const getDateRange = (type: "Daily" | "Weekly" | "Monthly") => {
+  const now = new Date();
+
+  if (type === "Daily") {
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    return { startDate: start, endDate: end };
+  }
+
+  if (type === "Weekly") {
+    const currentDay = now.getDay(); // 0 (Sun) - 6 (Sat)
+    const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
+
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diffToMonday, 0, 0, 0, 0);
+    const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6, 23, 59, 59, 999);
+
+    return { startDate: start, endDate: end };
+  }
+
+  // Monthly
+  const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+  return { startDate: start, endDate: end };
+};
+
+
+type SummaryType = "Daily" | "Weekly" | "Monthly";
+
+export const createAiSummary = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = (req.user as JwtPayload)?.id;
+
+    const user = await prisma.user.findFirst({
+      where: {id: userId},
+      select: {superRole: true}
+    });
+
+    if (!user || user.superRole !== "Admin") {
+      return res.status(404).json({message: "Not allow to generate report"})
+    }
+
+    const { type, content } = req.body as {
+      type: SummaryType;
+      content: string;
+    };
+
+    if (!type || !content) {
+      return res.status(400).json({ message: "Type and content are required" });
+    }
+
+    const { startDate, endDate } = getDateRange(type);
+
+    // prevent duplicate (extra safety beyond @@unique)
+    const existing = await prisma.aiSummary.findFirst({
+      where: {
+        type,
+        startDate: startDate,
+    endDate: endDate,
+      },
+    });
+
+    if (existing) {
+      return res.status(409).json({
+        message: `${type} summary already exists for this period`,
+      });
+    }
+
+    const summary = await prisma.aiSummary.create({
+      data: {
+        id: uuidv4(),
+        type,
+        startDate,
+        endDate,
+        content,
+      },
+    });
+
+    return res.status(201).json({
+      message: "Summary created successfully",
+      summary,
+    });
+  } catch (error: any) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
+  }
 };

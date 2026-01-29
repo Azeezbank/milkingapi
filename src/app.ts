@@ -27,20 +27,6 @@ const allowedOrigins = [
   "https://milking-three.vercel.app"  // deployed frontend
 ];
 
-// app.use(cors({
-//   origin: function(origin, callback) {
-//     // allow requests with no origin (like Postman)
-//     if (!origin) return callback(null, true);
-
-//     if (allowedOrigins.includes(origin)) {
-//       callback(null, true);
-//     } else {
-//       callback(new Error(`Origin ${origin} not allowed by CORS`));
-//     }
-//   },
-//   credentials: true,                  // allow cookies
-//   methods: ['GET', 'POST', 'PUT', 'DELETE']
-// }));
 
 app.set("trust proxy", 1); // REQUIRED if hosted
 
@@ -73,7 +59,7 @@ app.use("/api/v1/auth", auth);
 app.use("/api/v1/attendance", attendanceRoutes);
 app.use("/api/v1/admin", authMiddleware, requireAdmin, adminAttendance);
 app.use("/api/v1/admin/users", authMiddleware, requireAdmin, user);
-app.use("/api/v1/admin/users/my", authMiddleware, userCheck);
+app.use("/api/v1/users/my", authMiddleware, userCheck);
 app.use("/api/v1/admin/create/animals", authMiddleware, requireAdmin, createAnimal);
 app.use("/api/v1/milk/record", authMiddleware, milkSumary);
 app.use("/api/v1/off", authMiddleware, off);
