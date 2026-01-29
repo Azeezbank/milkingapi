@@ -214,3 +214,40 @@ export const createAiSummary = async (req: AuthRequest, res: Response) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+
+
+
+/**
+ * DELETE AI SUMMARY
+ * Works for Daily / Weekly / Monthly
+ */
+export const deleteAiSummary = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({ message: "Summary ID is required" });
+    }
+
+    // Check if summary exists
+    const existing = await prisma.aiSummary.findUnique({
+      where: { id },
+    });
+
+    if (!existing) {
+      return res.status(404).json({ message: "Summary not found" });
+    }
+
+    // Delete summary
+    await prisma.aiSummary.delete({
+      where: { id },
+    });
+
+    return res.status(200).json({
+      message: "Summary deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete summary error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
