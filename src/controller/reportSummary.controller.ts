@@ -117,7 +117,7 @@ export const getAiSummary = async (req: AuthRequest, res: Response) => {
       type: String(type), // daily | weekly | monthly
     },
     orderBy: {
-      createdAt: "desc",
+      startDate: "desc",
     },
   });
 
