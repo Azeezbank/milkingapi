@@ -221,7 +221,7 @@ export const createAiSummary = async (req: AuthRequest, res: Response) => {
  * DELETE AI SUMMARY
  * Works for Daily / Weekly / Monthly
  */
-export const deleteAiSummary = async (req: Request, res: Response) => {
+export const deleteAiSummary = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
 
